@@ -1,0 +1,17 @@
+#ifndef GLOBALS_H
+#define GLOBALS_H
+
+enum {
+  SLEEP,
+  INIT,
+  MPPT_READY,
+  NOODSTOP_READY,
+  ALL_READY,
+  WORKING,
+  OVERHEAD,
+  OVERLOAD,
+  OVERSPEED,
+  EXT_NOODSTOP
+} Status;
+
+#endif
