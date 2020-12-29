@@ -1,102 +1,97 @@
-#include <ti/drivers/I2CSlave.h>
+#include <ti/drivers/SPI.h>
 
 #include "communicatie.h"
 
-#define COMM_I2C_ADDRESS 0xB1
+#define SPI_PACKET_LENGTH 4
 
 extern pthread_t createSimplePTread(int prio, void * fn);
 
-union I2CPacket_t PacketBuffer; 
+unsigned char ReciveBuffer[SPI_PACKET_LENGTH];
+unsigned char TransmitBuffer[SPI_PACKET_LENGTH];
 
-void dataBijhouden(){
-  //BLOCK: wacht op werken
-  //??
+uint16_t comm_snelheid;
 
-  while(1){
-    //BLOCK: vermogen DUT aflezen
-    //??
+typedef enum {
+  SPIPARM_maxVermogen,
+  SPIPARM_maxSnelheid,
+  SPIPARM_maxTempratuur,
+  SPIPARM_setpoint,
+  SPIPARM_vermogen,
+  SPIPARM_snelheid,
+  SPIPARM_tempratuur,
+  SPIPARM_count
+} SPI_Register_t;
 
-    //BLOCK: Snelheid aflezen
-    //??
-
-    //BLOCK: bereken koppel
-    //??
-
-    //BLOCK: Vermogen belasting aflezen
-    //??
-
-    //BLOCK: Spanning belasting aflezen
-    //??
-
-    //BLOCK: bereken rendement
-    //??
-
-    //BLOCK: Temperatuur aflezen
-    //??
-
-    //BLOCK: sleep 1ms
-    usleep(1000);
-  }
-}
-
-// communicatie I2C Taak
-void comm_i2c(){
-
-  //BLOCK: init start begint
-  //??
-
-  //BLOCK: Initialiseer I2C
-  I2C_init();
-  //TODO: findout corect driver for this
-  Slave_Handle      handle;
-  I2CSlave_Params   params;
-  I2CSlave_Params_init(&params);
-  params.transferMode = I2CSLAVE_MODE_BLOCKING;
-  params.slaveAddress = COMM_I2C_ADDRESS;
-  handle = I2CSlave_open(CONFIG_I2C_0, &params);
-  if (!handle) {
-    System_printf("I2CSlave did not open");
+// communicatie spi Taak
+void comm_spi(){
+  // Initialiseer SPI
+  ISP_init();
+  SPI_Params spiParams;
+  SPI_Params_init(&spiParams);
+  spiParams.frameFormat = SPI_POL0_PHA0; // mode0
+  spiParams.bitRate = 1E6; // 1 MHz
+  SPI_Handle masterSpi = SPI_open(CONFIG_SPI_MASTER, &spiParams);
+  if (masterSpi == NULL) {
+      // Display_printf(display, 0, 0, "Error initializing master SPI\n");
+      while (1);
+  } else {
+      // Display_printf(display, 0, 0, "Master SPI initialized\n");
   }
 
-  //BLOCK: GPIO init
-  //??
+  // create transaction
+  SPI_Transaction transaction;
+  transaction.count = SPI_PACKET_LENGTH;
+  transaction.txBuf = (void *) TransmitBuffer;
+  transaction.rxBuf = (void *) ReciveBuffer;
 
-  //BLOCK: maak thread aan om waardes te updaten
-  createSimplePTread(1, &dataBijhouden);
-
-  I2CPacket_t packet;
-
+  // start the loop
+  TransmitBuffer[0] = 0;
   while(1){
-    //BLOCK: read package
-    //TODO: figgerout how it actualy works
-    I2C_read(handle, &packet, sizeof(Packet));
+    // zero the buffers
+    memset((void *) TransmitBuffer+1, 0, SPI_PACKET_LENGTH-1);
+    memset((void *) ReciveBuffer, 0, SPI_PACKET_LENGTH);
 
-    //BLOCK: send reply
-    //TODO: figgerout how it actualy works
-    I2C_send(handle, &PacketBuffer, sizeof(PacketBuffer));
-
-  	//BLOCK: identificeer package
-    switch (packet){
-      case PACKET_UPDATEBELASTING:
-        //BLOCK: Update setpoint
-        mppt_setpoint(packet.vermogenSetpoint);
+    // set data in the transmit buffer
+    ReciveBuffer[0] = TransmitBuffer[0];
+    switch(TransmitBuffer[0]){
+      case SPIPARM_vermogen:
+        TransmitBuffer[1] = mppt_getVermogen();
         break;
-      
-      case PACKET_NOODSTOP:
-        //BLOCK: Update Overheat, Overspeed, overload waardes updaten
-        //??
+      case SPIPARM_snelheid:
+        TransmitBuffer[1] = comm_snelheid;
         break;
-
-      case PACKET_INITPARAMS:
-        //BLOCK: Verstuur data naar noodstop
-        maxwaardes_t p;
-        p.maxTemperatuur = packet.maxTemperatuur;
-        p.maxVermogen = packet.maxVermogen;
-        p.maxSnelheid = packet.maxSnelheid;
-        //mq_send(MaxWaardes_mq, (const char*)&p, sizeof(p), 3);
-
-        //BLOCK: Verstuur data naar MPPT
-        mppt_setpoint(packet.vermogenSetpoint);
+      case SPIPARM_tempratuur: 
+        TransmitBuffer[1] = noodstop_getTemptatuur();
         break;
     }
+
+    // do the transaction
+    SPI_transaction(masterSpi, &transaction);
+
+  	// read the data out the recive buffer
+    switch (ReciveBuffer[0]){
+      case SPIPARM_maxVermogen:
+        uint8_t *maxVermogen = &ReciveBuffer[1];
+        noodstop_setMaxVermogen(*maxVermogen);
+        break;
+      case SPIPARM_maxSnelheid:
+        uint16_t *maxSnelheid = &ReciveBuffer[1];
+        noodstop_setMaxSnelheid(*maxSnelheid);
+        break;
+      case SPIPARM_maxTempratuur:
+        uint8_t *maxTemptratuur = &ReciveBuffer[1];
+        noodstop_setMaxTemptratuur(*maxTemptratuur);
+        break;
+      case SPIPARM_setpoint:
+        uint8_t *setpoint = &ReciveBuffer[1];
+        mppt_setpoint(*setpoint);
+        break;
+    }
+
+    // increment and loop parameter
+    TransmitBuffer[0]++;
+    if(TransmitBuffer[0] == SPIPARM_count)
+      TransmitBuffer[0] = 0;
+
+    usleep(5000);
 }
