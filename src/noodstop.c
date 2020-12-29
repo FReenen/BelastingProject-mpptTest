@@ -1,79 +1,107 @@
-#include <mqueue.h>
 #include <ti/drivers/GPIO.h>
 #include <ti/drivers/ADC.h>
+#include <ti/drivers/SPI.h>
+#include <pthread.h>
 
 #include "global.h"
 #include "communicatie.h"
 #include "MPPT.h"
 
-struct maxwaardes_t nood_maxwaardes;
+struct {
+  uint8_t maxTempratuur;
+  uint8_t maxVermogen;
+  uint16_t maxSnelheid;
+} nood_maxwaardes;
 
 extern pthread_t createSimplePTread(int prio, void * fn);
 
-void nood_activeerNoodstop(){
-  //BLOCK: zet noodstop GPIO als uitgang
-  //TODO: do it!
-
-  //BLOCK: noodstop GPIO = laag
-  //TODO: do it!
+void noodstop_setMaxVermogen(uint8_t value){
+  nood_maxwaardes.maxVermogen = value;
+}
+void noodstop_setMaxSnelheid(uint16_t value){
+  nood_maxwaardes.maxSnelheid = value;
+}
+void noodstop_setMaxTemptratuur(uint8_t value){
+  nood_maxwaardes.maxTempratuur = value;
 }
 
-void snelhied(uint16_t snelhied){
-  //TODO: whoosh.
+void noodstop_activeerNoodstop(){
+  // zet noodstop GPIO als uitgang en laag
+  GPIO_setConfig(CONF_GPIO_NOODSTOP, GPIO_CFG_OUT_LOW); //TODO: check config
 
-  //BLOCK: controleer snelheid
+  // set status
+}
+
+void noodstop_snelhied(uint16_t snelhied){
+  // controleer snelheid
   if(snelhied > nood_maxwaardes.maxSnelheid){
-    //BLOCK: vermogen overwrite = max vermogen
+    // PANIC!!
     mppt_vermogenOverride(nood_maxwaardes.maxVermogen);
     
-    //BLOCK: Wacht 0.5 seconde
-    usleep(500000);
+    // Wacht 0.5 seconde
+    usleep(500E3);
 
-    //BLOCK: activeer noostop
-    nood_activeerNoodstop();
+    // activeer noostop
+    Status = OVERSPEED;
+    noodstop_activeerNoodstop();
   }
 }
 
-void nood_tempratuurHandle(){
+void noodstop_tempratuurHandle(){
+  uint8_t tempratuur;
   do{
-    //BLOCK: wacht 0.1 seconde
-    usleep(100000);
+    // wacht 0.1 seconde
+    usleep(100E3);
 
-    //BLOCK: lees ADC uit
+    // lees ADC uit
     //TODO: do it!
 
-    //BLOCK: bereken temperatuur
+    // bereken temperatuur
     //?? Yeti wat is die formule?
+    tempratuur = ~0;
     
-    //BLOCK: controleer temperatuur
-  }while(tempratuur < nood_maxwaardes.maxTemptratuur);
+    // controleer temperatuur
+  }while(tempratuur < nood_maxwaardes.maxTempratuur);
 
-  //BLOCK: vermogen override = 0W
+  // vermogen override = 0W
   mppt_vermogenOverride(0);
 
-  //BLOCK: activeer noostop
-  nood_activeerNoodstop();
+  // activeer noostop
+  Status = OVERHEAD;
+  noodstop_activeerNoodstop();
 }
 
-void nood_noodstopISR(){
-  //BLOCK: Wacht 0.5 seconde
+void noodstop_noodstopISR(){
+  // Wacht 0.5 seconde
   usleep(500000);
 
-  //BLOCK: activeer noostop
-  nood_activeerNoodstop();
+  // activeer noostop
+  Status = EXT_NOODSTOP;
+  noodstop_activeerNoodstop();
 }
 
-void nood_init(){
-  //BLOCK: ADC init
+void noodstop_init(){
+  // ADC init
   //TODO: do it!
 
-  //BLOCK: GPIO init
-  //TODO: do it!
+  // GPIO init
+  GPIO_setConfig(CONF_GPIO_NOODSTOP, GPIO_CFG_IN_PU); //TODO: check config
 
-  //BLOCK: wacht op Max waardes
-  mq_receive(MaxWaardes_mq, (char*)&nood_maxwaardes, sizeof(nood_maxwaardes), NULL);
+  memset(&nood_maxwaardes, 0xff, sizeof(nood_maxwaardes)); // set all max value to invalid ones
 
-  //BLOCK: Update status
+  // controleer max waardes
+  while(1){
+    if(
+         nood_maxwaardes.maxSnelheid <= 60000
+      && nood_maxwaardes.maxTempratuur >= 60 && nood_maxwaardes.maxTempratuur <= 120
+      && nood_maxwaardes.maxVermogen <= 250
+    ){
+      break; // stop the loop values are valid
+    }
+    usleep(100E3);
+  }
+
+  // Update status
   if(Status == INIT){
     Status = NOODSTOP_READY;
   }else if(Status == MPPT_READY){
@@ -82,14 +110,23 @@ void nood_init(){
     ERROR("invalid Status");
   }
 
-  //BLOCK: wacht tot status == werken
+  // wacht tot status == werken
   while(Status != WORKING){
-    usleep(1000);
+    usleep(1E3);
   }
 
-  //BLOCK: maak tread voor ADC
-  createSimplePTread(1, &nood_tempratuurHandle);
+  // start the treath voor het uitlezen van de temptatuur
+  pthread_t adcThread = createSimplePTread(1, &noodstop_tempratuurHandle);
 
-  //BLOCK: Maak interrupt voor noodstop signaal
+  // Maak interrupt voor noodstop signaal
   //TODO: do it!
+
+  // wait until it stops
+  while(Status = WORKING){
+    usleep(5E3);
+  }
+
+  // stop threadhs
+  Task_delete(adcThread);
+  //TODO: deinit ADC
 }

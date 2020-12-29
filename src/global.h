@@ -1,6 +1,8 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
+#include "ti_drivers_config.h"
+
 enum {
   SLEEP,
   INIT,

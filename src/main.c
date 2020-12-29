@@ -1,7 +1,11 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <ti/sysbios/BIOS.h>
-#include "ti_drivers_config.h"
+
+#include "global.h"
+#include "communicatie.h"
+#include "noodstop.h"
+#include "MPPT.h"
 
 #define ERROR(msg) return; //TODO: create error handeler
 
@@ -23,11 +27,17 @@ pthread_t createSimplePTread(int prio, void * fn){
   return thread;
 }
 
+void startInit(){
+  createSimplePTread(1, &comm_spi);
+  createSimplePTread(1, &noodstop_init);
+  //TODO: add systeembeheer and mppt
+}
+
 int main(void)
 {
   Board_init(); // initilaze board
-
   
+  //TODO: add logic
 
   BIOS_start(); // start the BIOS
 }

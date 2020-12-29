@@ -1,5 +1,3 @@
-#include <ti/drivers/SPI.h>
-
 #include "communicatie.h"
 
 #define SPI_PACKET_LENGTH 4
@@ -30,7 +28,7 @@ void comm_spi(){
   SPI_Params_init(&spiParams);
   spiParams.frameFormat = SPI_POL0_PHA0; // mode0
   spiParams.bitRate = 1E6; // 1 MHz
-  SPI_Handle masterSpi = SPI_open(CONFIG_SPI_MASTER, &spiParams);
+  masterSpi = SPI_open(CONFIG_SPI_MASTER, &spiParams);
   if (masterSpi == NULL) {
       // Display_printf(display, 0, 0, "Error initializing master SPI\n");
       while (1);
@@ -66,6 +64,7 @@ void comm_spi(){
     }
 
     // do the transaction
+    //TODO: set the CS
     SPI_transaction(masterSpi, &transaction);
 
   	// read the data out the recive buffer

@@ -1,7 +1,7 @@
 #ifndef COMMUNICATIE_H
 #define COMMUNICATIE_H
 
-#include <mqueue.h>
+#include <ti/drivers/SPI.h>
 
 // enummeration for packet IDs
 typedef enum {
@@ -64,5 +64,7 @@ union {
   initAandrijving;
   dataAandrijving;
 } I2CPacket_t;
+
+void comm_spi();
 
 #endif
