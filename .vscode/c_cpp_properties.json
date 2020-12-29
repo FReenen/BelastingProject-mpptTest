@@ -1,0 +1,34 @@
+{
+    "env": {
+        "DEBUGDIR": "./debug",
+        "SRCDIR"  : "./src",
+        "BINDIR"  : "./bin",
+        "TI_CCSDIR"      : "/home/mreenen/.local/share/ccs10/ccs",
+        "TI_SL_CC32xxDIR": "/home/mreenen/.local/share/ccs10/simplelink_cc32xx_sdk_4_30_00_06",
+        "TI_INCLUDEDIR"  : "${TI_SL_CC32xxDIR}/source",
+        "TI_XDCTOOLSDIR" : "/home/mreenen/.local/share/ccs10/xdctools_3_61_02_27_core",
+        "TI_KERNEL"      : "${TI_SL_CC32xxDIR}/kernel/tirtos",
+        "TI_EABI"	     : "${TI_KERNEL}/packages/gnu/targets/arm/libs/install-native/arm-none-eabi/include/",
+        "TI_CGT"	     : "${TI_CCSDIR}/tools/compiler/ti-cgt-arm_20.2.1.LTS/include"
+    },"configurations": [
+        {
+            "name": "TI",
+            "compilerPath": "/usr/bin/gcc",
+            "includePath": [
+                "${TI_INCLUDEDIR}",
+                "${TI_INCLUDEDIR}/ti/posix/gcc",
+                "${TI_KERNEL}/packages",
+                "${TI_XDCTOOLSDIR}/packages",
+                "${TI_CGT}",
+                "${TI_EABI}"
+            ],
+            "defines": [
+                "DEVICE_FAMALY=CC32xx",
+                "DEVICE=CC3220S"
+            ]
+        }
+    ],
+    "version": 4
+  }
+  
+  
