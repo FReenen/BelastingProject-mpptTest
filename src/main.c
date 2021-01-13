@@ -30,7 +30,8 @@ pthread_t createSimplePTread(int prio, void * fn){
 void startInit(){
   createSimplePTread(1, &comm_spi);
   createSimplePTread(1, &noodstop_init);
-  //TODO: add systeembeheer and mppt
+  createSimplePTread(1, &mppt_init);
+  //TODO: add systeembeheer
 }
 
 int main(void)
