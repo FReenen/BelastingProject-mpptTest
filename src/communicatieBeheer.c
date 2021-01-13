@@ -1,8 +1,8 @@
+#include "global.h"
 #include "communicatie.h"
 
 #define SPI_PACKET_LENGTH 4
 
-extern pthread_t createSimplePTread(int prio, void * fn);
 
 unsigned char ReciveBuffer[SPI_PACKET_LENGTH];
 unsigned char TransmitBuffer[SPI_PACKET_LENGTH];
@@ -28,7 +28,7 @@ void comm_spi(){
   SPI_Params_init(&spiParams);
   spiParams.frameFormat = SPI_POL0_PHA0; // mode0
   spiParams.bitRate = 1E6; // 1 MHz
-  masterSpi = SPI_open(CONFIG_SPI_MASTER, &spiParams);
+  SPI_Handle masterSpi = SPI_open(CONFIG_SPI_MASTER, &spiParams);
   if (masterSpi == NULL) {
       // Display_printf(display, 0, 0, "Error initializing master SPI\n");
       while (1);
@@ -37,10 +37,10 @@ void comm_spi(){
   }
 
   // create transaction
-  SPI_Transaction transaction;
-  transaction.count = SPI_PACKET_LENGTH;
-  transaction.txBuf = (void *) TransmitBuffer;
-  transaction.rxBuf = (void *) ReciveBuffer;
+  SPI_Transaction spiTransaction;
+  spiTransaction.count = SPI_PACKET_LENGTH;
+  spiTransaction.txBuf = (void *) TransmitBuffer;
+  spiTransaction.rxBuf = (void *) ReciveBuffer;
 
   // start the loop
   TransmitBuffer[0] = 0;
@@ -65,25 +65,25 @@ void comm_spi(){
 
     // do the transaction
     //TODO: set the CS
-    SPI_transaction(masterSpi, &transaction);
+    SPI_transaction(masterSpi, &spiTransaction);
 
   	// read the data out the recive buffer
     switch (ReciveBuffer[0]){
       case SPIPARM_maxVermogen:
-        uint8_t *maxVermogen = &ReciveBuffer[1];
-        noodstop_setMaxVermogen(*maxVermogen);
+        uint8_t maxVermogen = ReciveBuffer[2];
+        noodstop_setMaxVermogen(maxVermogen);
         break;
       case SPIPARM_maxSnelheid:
-        uint16_t *maxSnelheid = &ReciveBuffer[1];
-        noodstop_setMaxSnelheid(*maxSnelheid);
+        uint16_t maxSnelheid = ReciveBuffer[2] + ReciveBuffer[3]*0x100; // convert littelendien
+        noodstop_setMaxSnelheid(maxSnelheid);
         break;
       case SPIPARM_maxTempratuur:
-        uint8_t *maxTemptratuur = &ReciveBuffer[1];
-        noodstop_setMaxTemptratuur(*maxTemptratuur);
+        uint8_t maxTemptratuur = &ReciveBuffer[2];
+        noodstop_setMaxTemptratuur(maxTemptratuur);
         break;
       case SPIPARM_setpoint:
-        uint8_t *setpoint = &ReciveBuffer[1];
-        mppt_setpoint(*setpoint);
+        uint8_t setpoint = &ReciveBuffer[2];
+        mppt_setpoint(setpoint);
         break;
     }
 

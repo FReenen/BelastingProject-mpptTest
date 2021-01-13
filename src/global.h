@@ -1,6 +1,7 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
+#include <pthread.h>
 #include "ti_drivers_config.h"
 
 enum {
@@ -15,5 +16,7 @@ enum {
   OVERSPEED,
   EXT_NOODSTOP
 } Status;
+
+pthread_t createSimplePTread(int prio, void * fn);
 
 #endif

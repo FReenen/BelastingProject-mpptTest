@@ -16,7 +16,7 @@ typedef struct {
   bool overheeat;
   bool overload;
   bool overspeed;
-} initAandrijving;
+} noodstop;
 
 typedef struct {
   packetID_t id;
