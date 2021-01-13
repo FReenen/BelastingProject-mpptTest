@@ -70,20 +70,16 @@ void comm_spi(){
   	// read the data out the recive buffer
     switch (ReciveBuffer[0]){
       case SPIPARM_maxVermogen:
-        uint8_t maxVermogen = ReciveBuffer[2];
-        noodstop_setMaxVermogen(maxVermogen);
+        noodstop_setMaxVermogen(ReciveBuffer[2]);
         break;
       case SPIPARM_maxSnelheid:
-        uint16_t maxSnelheid = ReciveBuffer[2] + ReciveBuffer[3]*0x100; // convert littelendien
-        noodstop_setMaxSnelheid(maxSnelheid);
+        noodstop_setMaxSnelheid(ReciveBuffer[2] + ReciveBuffer[3]*0x100);
         break;
       case SPIPARM_maxTempratuur:
-        uint8_t maxTemptratuur = &ReciveBuffer[2];
-        noodstop_setMaxTemptratuur(maxTemptratuur);
+        noodstop_setMaxTemptratuur(ReciveBuffer[2]);
         break;
       case SPIPARM_setpoint:
-        uint8_t setpoint = &ReciveBuffer[2];
-        mppt_setpoint(setpoint);
+        mppt_setSsetpoint(ReciveBuffer[2]);
         break;
     }
 
@@ -93,4 +89,5 @@ void comm_spi(){
       TransmitBuffer[0] = 0;
 
     usleep(5000);
+  }
 }

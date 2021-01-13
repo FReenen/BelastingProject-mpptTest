@@ -36,7 +36,7 @@ void noodstop_snelhied(uint16_t snelhied){
   // controleer snelheid
   if(snelhied > nood_maxwaardes.maxSnelheid){
     // PANIC!!
-    mppt_vermogenOverride(nood_maxwaardes.maxVermogen);
+    mppt_setSetpointOverride(nood_maxwaardes.maxVermogen);
     
     // Wacht 0.5 seconde
     usleep(500E3);

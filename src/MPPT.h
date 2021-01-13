@@ -4,6 +4,8 @@
 #include <stdint.h>
 
 void mppt_init();
-void mppt_vermogenOverride(uint8_t vermogen);
+void mppt_start();
+void mppt_setSetpointOverride(uint8_t vermogen);
+void mppt_setSetpoint(uint8_t vermogen);
 
 #endif
