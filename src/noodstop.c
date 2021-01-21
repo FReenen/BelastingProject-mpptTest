@@ -1,19 +1,20 @@
-#include <ti/drivers/GPIO.h>
-#include <ti/drivers/ADC.h>
-#include <ti/drivers/SPI.h>
 #include <pthread.h>
+#include <stdint.h>
+
+#include "debug.h"
 
 #include "global.h"
 #include "communicatie.h"
 #include "MPPT.h"
+#include "spi.h"
 
 struct {
   uint8_t maxTempratuur;
   uint8_t maxVermogen;
   uint16_t maxSnelheid;
 } nood_maxwaardes;
-
-extern pthread_t createSimplePTread(int prio, void * fn);
+pthread_t adcThread;
+uint8_t temp;
 
 void noodstop_setMaxVermogen(uint8_t value){
   nood_maxwaardes.maxVermogen = value;
@@ -28,8 +29,6 @@ void noodstop_setMaxTemptratuur(uint8_t value){
 void noodstop_activeerNoodstop(){
   // zet noodstop GPIO als uitgang en laag
   GPIO_setConfig(CONF_GPIO_NOODSTOP, GPIO_CFG_OUT_LOW); //TODO: check config
-
-  // set status
 }
 
 void noodstop_snelhied(uint16_t snelhied){
@@ -47,33 +46,48 @@ void noodstop_snelhied(uint16_t snelhied){
   }
 }
 
+uint8_t noodstop_getTempratuur(){
+  return temp;
+}
+
+uint8_t noodstop_readTemp(uint8_t ch){
+  uint16_t v = ADC_read(&SPI_ADC);
+
+  //TODO: add real fomula
+
+  return v >> 2;
+}
+
 void noodstop_tempratuurHandle(){
-  uint8_t tempratuur;
+  uint8_t tempB;
   do{
     // wacht 0.1 seconde
     usleep(100E3);
 
-    // lees ADC uit
-    //TODO: do it!
+    // read tempretures
+    temp = noodstop_readTemp(ADC_CH0);
+    tempB = noodstop_readTemp(ADC_CH1);
+    if(temp < tempB)
+      temp = tempB;
 
-    // bereken temperatuur
-    //?? Yeti wat is die formule?
-    tempratuur = ~0;
-    
     // controleer temperatuur
-  }while(tempratuur < nood_maxwaardes.maxTempratuur);
+  }while(temp < nood_maxwaardes.maxTempratuur);
 
   // vermogen override = 0W
-  mppt_vermogenOverride(0);
+  mppt_setSetpointOverride(0);
 
   // activeer noostop
   Status = OVERHEAD;
   noodstop_activeerNoodstop();
 }
 
-void noodstop_noodstopISR(){
+/** noodstopISR()
+ * ISR for the external emergency stop from the button or other devides
+ * The ISR is created in the syscfg.
+ */
+void noodstopISR(){
   // Wacht 0.5 seconde
-  usleep(500000);
+  usleep(500E3);
 
   // activeer noostop
   Status = EXT_NOODSTOP;
@@ -81,9 +95,6 @@ void noodstop_noodstopISR(){
 }
 
 void noodstop_init(){
-  // ADC init
-  //TODO: do it!
-
   // GPIO init
   GPIO_setConfig(CONF_GPIO_NOODSTOP, GPIO_CFG_IN_PU); //TODO: check config
 
@@ -109,24 +120,14 @@ void noodstop_init(){
   }else{
     ERROR("invalid Status");
   }
+}
 
-  // wacht tot status == werken
-  while(Status != WORKING){
-    usleep(1E3);
-  }
-
+void noodstop_start(){
   // start the treath voor het uitlezen van de temptatuur
-  pthread_t adcThread = createSimplePTread(1, &noodstop_tempratuurHandle);
+  adcThread = createSimplePTread(2, &noodstop_tempratuurHandle);
+}
 
-  // Maak interrupt voor noodstop signaal
-  //TODO: do it!
-
-  // wait until it stops
-  while(Status = WORKING){
-    usleep(5E3);
-  }
-
-  // stop threadhs
-  Task_delete(adcThread);
-  //TODO: deinit ADC
+void noodstop_deinit(){
+  // stop threads
+  pthread_exit(adcThread);
 }

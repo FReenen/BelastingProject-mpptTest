@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include "ti_drivers_config.h"
 
-enum {
+typedef enum {
   SLEEP,
   INIT,
   MPPT_READY,
@@ -15,7 +15,9 @@ enum {
   OVERLOAD,
   OVERSPEED,
   EXT_NOODSTOP
-} Status;
+} Status_t;
+
+Status_t Status;
 
 pthread_t createSimplePTread(int prio, void * fn);
 

@@ -6,8 +6,13 @@
 void noodstop_setMaxVermogen(uint8_t value);
 void noodstop_setMaxSnelheid(uint16_t value);
 void noodstop_setMaxTemptratuur(uint8_t value);
-
 void noodstop_snelhied(uint16_t snelhied);
+
 void noodstop_init();
+void noodstop_start();
+void noodstop_deinit();
+
+uint8_t noodstop_getTempratuur();
+void noodstop_activeerNoodstop();
 
 #endif
