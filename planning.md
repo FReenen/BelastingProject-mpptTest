@@ -2,13 +2,12 @@
 
 ## vrij - 22 jan
 
-[ ] deze planning maken
+[x] deze planning maken
 [ ] mppt algaritme programeren
 [ ] code controleeren
 
 ## weekend - 23-24 jan
 
-[ ] msp software maken
 [ ] ADC aanluiten
 
 [ ] test voor mppt

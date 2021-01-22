@@ -55,6 +55,7 @@ void stopSys(){
   pthread_exit(treads.noodstop);
   pthread_exit(treads.mppt);
 
+  treads.mppt = createSimplePTread(1, &mppt_deinit);
   treads.noodstop = createSimplePTread(3, &noodstop_deinit);
 }
 

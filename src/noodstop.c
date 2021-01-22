@@ -51,7 +51,7 @@ uint8_t noodstop_getTempratuur(){
 }
 
 uint8_t noodstop_readTemp(uint8_t ch){
-  uint16_t v = ADC_read(&SPI_ADC);
+  uint16_t v = ADC_read(ch);
 
   //TODO: add real fomula
 

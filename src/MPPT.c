@@ -63,15 +63,77 @@ void mppt_setPWM(double d){
 void mppt_start(){
   PWM_start(mppt_pwm);
 
-  //TODO: implement the mppt algaritme
-  double duty = 0, step = 0.01;
-  while(1){ //(Status == WORKING){
+  //TODO: addjust stap size so that big stap is a bit less than 5 wattand small stap is less than .5 watt
+  double duty = 0, bigStap = 0.05, smallStap = 0.002;
+  enum mppt_state {
+    bigStaps,
+    smallStaps
+  } state;
+  int16_t vermogenDiff, lastVermogen;
+  while(1){
     mppt_setPWM(duty);
-    duty += step;
-    if(duty > 1 || duty < 0){
-      step = -step;
-      duty += step;
+    if(state == bigStaps){
+      while(1){
+        // set stap
+        if(mppt_vermogen - *(mppt_setpointP) > 0){
+          duty += bigStap;
+        }else{
+          duty -= bigStap;
+        }
+        mppt_setPWM(duty);
+
+        // wait for change to happen
+        //TODO: finetune delay
+        usleep(10E3);
+
+        // mesure power
+        mppt_meetVermogen();
+
+        // check the dirrerance width the setpoint
+        vermogenDiff = mppt_vermogen - *(mppt_setpointP);
+        if(vermogenDiff < 0) // get absolute value
+          vermogenDiff  = -vermogenDiff;
+
+        if(vermogenDiff < 50 || mppt_vermogen < lastVermogen){
+          state = smallStaps;
+          break;
+        }
+      }
+    }else{
+      while(1){
+        // set stap
+        if(mppt_vermogen - *(mppt_setpointP) > 0){
+          duty += smallStap;
+        }else{
+          duty -= smallStap;
+        }
+        mppt_setPWM(duty);
+
+        // wait for change to happen
+        //TODO: finetune delay
+        usleep(10E3);
+
+        // mesure power
+        mppt_meetVermogen();
+
+        // check the dirrerance width the setpoint
+        vermogenDiff = mppt_vermogen - *(mppt_setpointP);
+        if(vermogenDiff < 0) // get absolute value
+          vermogenDiff  = -vermogenDiff;
+
+        if(vermogenDiff > 5){
+          state = bigStaps;
+          break;
+        }
+
+        usleep(100E3);
+        mppt_meetVermogen();
+      }
     }
-    usleep(100);
   }
+}
+
+void mppt_deinit(){
+  mppt_setPWM(0);
+  PWM_stop(mppt_pwm);
 }
