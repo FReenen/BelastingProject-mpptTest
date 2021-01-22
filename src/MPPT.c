@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <ti/drivers/PWM.h>
 
+#include "debug.h"
 #include "global.h"
 #include "MPPT.h"
 #include "spi.h"
@@ -8,7 +9,7 @@
 #define PWM_MIN 0.001
 #define PWM_MAX 0.9
 
-uint8_t mppt_setpoint, mppt_setpointOverrite, mppt_vermogen;
+uint8_t mppt_setpoint = 0xff, mppt_setpointOverrite, mppt_vermogen;
 uint8_t *mppt_setpointP;
 
 PWM_Handle mppt_pwm;
@@ -42,11 +43,25 @@ void mppt_init(){
   params.periodValue = 10; // 100 kHz
   mppt_pwm = PWM_open(CONFIG_PWM_0, &params);
   if (mppt_pwm == NULL) {
-    while (1);
+    ERROR("faild to open PWM");
+    return;
   }
 
   mppt_setpointP = &mppt_setpoint;
   mppt_start();
+
+  // whit until it recevs a valid setpoint
+  while(mppt_setpoint > 250)
+    usleep(1e3);
+
+  // Update status
+  if(Status == INIT){
+    Status = MPPT_READY;
+  }else if(Status == NOODSTOP_READY){
+    Status = ALL_READY;
+  }else{
+    ERROR("invalid Status");
+  }
 }
 
 void mppt_setPWM(double d){
@@ -134,6 +149,7 @@ void mppt_start(){
 }
 
 void mppt_deinit(){
+  mppt_setpoint = 0xff;
   mppt_setPWM(0);
   PWM_stop(mppt_pwm);
 }

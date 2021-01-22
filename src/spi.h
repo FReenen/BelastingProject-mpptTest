@@ -29,8 +29,6 @@ typedef struct SPI_Trans_t {
 } SPI_Trans_t;
 SPI_Handle *SPI_Handaler;
 
-SPI_Trans_t SPI_ADC;
-
 void SPI_Init();
 uint16_t ADC_read(uint8_t ch);
 int SPI_trans(SPI_Trans_t *trans);

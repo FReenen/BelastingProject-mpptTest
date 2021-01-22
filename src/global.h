@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include "ti_drivers_config.h"
 
-typedef enum {
+typedef enum Status_t {
   SLEEP,
   INIT,
   MPPT_READY,

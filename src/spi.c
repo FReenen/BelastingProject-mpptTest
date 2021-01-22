@@ -4,6 +4,7 @@
 #include "debug.h"
 
 
+SPI_Trans_t SPI_ADC;
 uint8_t ADC_TxBuf[4];
 uint8_t ADC_RxBuf[4];
 
@@ -13,7 +14,7 @@ void SPI_Init(){
   // init ADC
   SPI_Params_init(&SPI_ADC.params);
   SPI_ADC.interface = CONFIG_SPI_MASTER;
-  SPI_ADC.cs = CONFIG_GPIO_CSMSP;
+  SPI_ADC.cs = CONFIG_GPIO_CSADC;
   SPI_ADC.params.frameFormat = SPI_POL0_PHA0; // mode 0
   SPI_ADC.params.bitRate = 1E6; // 1 MHz
   SPI_ADC.trans.count = 4;
@@ -40,7 +41,7 @@ int SPI_trans(SPI_Trans_t *trans){
   SPI_Handaler = &spih;
 
   // open spi connection with paramaters of this one
-  spih = SPI_open(CONFIG_SPI_MASTER, &trans->params);
+  spih = SPI_open(trans->interface, &trans->params);
   if (spih == NULL) {
     ERROR("initialising SPI for communicating with the MSP\n");
     return 1;

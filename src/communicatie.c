@@ -33,7 +33,7 @@ void comm_init(){
   SPI_Params_init(&SPI_MSPTrans.params);
   SPI_MSPTrans.interface = CONFIG_SPI_MASTER;
   SPI_MSPTrans.cs = CONFIG_GPIO_CSMSP;
-  SPI_ADC.params.frameFormat = SPI_POL0_PHA0; // mode 0
+  SPI_MSPTrans.params.frameFormat = SPI_POL0_PHA0; // mode 0
   SPI_MSPTrans.params.bitRate = 1E6; // 1 MHz
   SPI_MSPTrans.trans.count = SPI_PACKET_LENGTH;
   SPI_MSPTrans.trans.txBuf = &TransmitBuffer[0];
@@ -86,3 +86,5 @@ void comm_init(){
     usleep(SPI_INTERVAL);
   }
 }
+
+//TODO: add uart code

@@ -10,7 +10,6 @@ void noodstop_snelhied(uint16_t snelhied);
 
 void noodstop_init();
 void noodstop_start();
-void noodstop_deinit();
 
 uint8_t noodstop_getTempratuur();
 void noodstop_activeerNoodstop();

@@ -51,12 +51,12 @@ void startSys(){
   treads.noodstop = createSimplePTread(4, &noodstop_start);
 }
 void stopSys(){
+  //TODO: communication say what the reason for the emergency stop was if thare was one
   // pthread_exit(treads.comm);
   pthread_exit(treads.noodstop);
   pthread_exit(treads.mppt);
 
   treads.mppt = createSimplePTread(1, &mppt_deinit);
-  treads.noodstop = createSimplePTread(3, &noodstop_deinit);
 }
 
 void initISR(){
@@ -83,12 +83,16 @@ void startSysISR(){
 void * mainTask(void *arg){
   Status_t lastState;
   while(1){
+    INFO("system state changed from %s to %s", lastState, Status);
     switch (Status){
       case SLEEP:
         stopSys();
         break;
       case INIT:
         startInit();
+        break;
+      case ALL_READY:
+        //TODO: say the system is ready
         break;
       case WORKING:
         startSys();
@@ -112,5 +116,5 @@ int main(void){
   treads.sysBeheer = createSimplePTread(1, mainTask);
   BIOS_start(); // start the BIOS
   while(1)
-    usleep(1E6);
+    sleep(10);
 }

@@ -107,7 +107,7 @@ void noodstop_init(){
       && nood_maxwaardes.maxTempratuur >= 60 && nood_maxwaardes.maxTempratuur <= 120
       && nood_maxwaardes.maxVermogen <= 250
     ){
-      break; // stop the loop values are valid
+      break; // stop the loop, values are valid
     }
     usleep(100E3);
   }
@@ -123,11 +123,5 @@ void noodstop_init(){
 }
 
 void noodstop_start(){
-  // start the treath voor het uitlezen van de temptatuur
-  adcThread = createSimplePTread(2, &noodstop_tempratuurHandle);
-}
-
-void noodstop_deinit(){
-  // stop threads
-  pthread_exit(adcThread);
+  noodstop_tempratuurHandle();
 }
