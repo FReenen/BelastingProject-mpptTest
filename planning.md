@@ -4,11 +4,11 @@
 
 - [x] deze planning maken
 - [x] mppt algaritme programeren
-- [ ] code controleeren
+- [x] code controleeren
 
 ## weekend - 23-24 jan
 
-- [ ] ADC aanluiten
+- [x] ADC aanluiten
 
 - [ ] testcode voor mppt maken
 - [ ] testcode voor spi maken
