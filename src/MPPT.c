@@ -87,7 +87,7 @@ void mppt_start(){
   int16_t vermogenDiff, lastVermogen;
   while(1){
     mppt_setPWM(duty);
-    if(state == bigStaps){
+    if(state == bigStaps){ // big stap state - finding roughly the setpoint a bit faster or find the peek power point
       while(1){
         // set stap
         if(mppt_vermogen - *(mppt_setpointP) > 0){
@@ -109,12 +109,13 @@ void mppt_start(){
         if(vermogenDiff < 0) // get absolute value
           vermogenDiff  = -vermogenDiff;
 
+        //TODO: don't let the peek power point detecten trigger if it oversoots or needs to ajust down.
         if(vermogenDiff < 50 || mppt_vermogen < lastVermogen){
           state = smallStaps;
           break;
         }
       }
-    }else{
+    }else{ // small stap state - aparanly it's close to the target. now get closer to it.
       while(1){
         // set stap
         if(mppt_vermogen - *(mppt_setpointP) > 0){
@@ -136,11 +137,16 @@ void mppt_start(){
         if(vermogenDiff < 0) // get absolute value
           vermogenDiff  = -vermogenDiff;
 
-        if(vermogenDiff > 5){
+        if(vermogenDiff > 50){
           state = bigStaps;
           break;
         }
 
+        if(vermogenDiff > 5){
+          break;
+        }
+
+        // we reached the setpoint within 0.5 watts
         usleep(100E3);
         mppt_meetVermogen();
       }

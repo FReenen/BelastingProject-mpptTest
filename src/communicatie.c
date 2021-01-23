@@ -49,13 +49,13 @@ void comm_init(){
     // set data in the transmit buffer
     switch(TransmitBuffer[0]){
       case SPIPARM_vermogen:
-        TransmitBuffer[1] = mppt_getVermogen();
+        TransmitBuffer[2] = mppt_getVermogen();
         break;
       case SPIPARM_snelheid:
-        TransmitBuffer[1] = comm_snelheid;
+        TransmitBuffer[2] = comm_snelheid;
         break;
       case SPIPARM_tempratuur: 
-        TransmitBuffer[1] = noodstop_getTempratuur();
+        TransmitBuffer[2] = noodstop_getTempratuur();
         break;
     }
 
